@@ -1,13 +1,20 @@
 # ogp maria adminer
 
+## OGP-Panel
+
+Todo
+[https://opengamepanel.org/install_guide/panel.html](https://opengamepanel.org/install_guide/panel.html)
+
 ~~~bash
-podman build -t ogp-panel:latest .
+podman build --log-level=debug -t ogp-panel:latest .
 podman run --rm --replace --cap-add=NET_RAW --name ogp-panel
 podman run --rm --replace --interactive --tty --cap-add=NET_RAW --name ogp-panel --publish 8080:80 ogp-panel:latest /bin/bash
 ~~~
 
 ~~~bash
 podman pull debian:11.11
+podman run --rm --replace --interactive --tty --cap-add=NET_RAW --name debian docker.io/library/debian:11.11 /bin/bash
+~~~
 
 ~~~bash
 export MARIADB_ROOT_PASSWORD='HelloWorld!'
@@ -29,6 +36,8 @@ podman run --detach --replace --name adminer \
     --pod=${MARIADB_PODNAME} \
     --env ADMINER_DEFAULT_SERVER=mariadb \
     docker.io/library/adminer:5.2.1
+
+# Contenu de la base de donnée
 ls -la $(podman volume inspect database | jq '.[].Mountpoint' | tr -d '"')
 echo $(podman volume inspect database | jq '.[].Mountpoint' | tr -d '"')
 
@@ -45,4 +54,9 @@ podman run --pod=${MARIADB_PODNAME} --volume backup:/backup --rm mariadb:11.7.2 
 
 # Pour migrer vers kubernetes
 podman generate kube ${MARIADB_PODNAME}
+
+# Pour tout supprimer
+podman pod stop --ignore ${MARIADB_PODNAME}
+podman pod rm --ignore --force ${MARIADB_PODNAME}
+podman volume rm database
 ~~~

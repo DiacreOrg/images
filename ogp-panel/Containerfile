@@ -23,22 +23,25 @@ LABEL org.opencontainers.image.documentation="https://github.com/DiacreOrg/infra
 ARG APT_FLAGS="-q -y"
 ARG DOCUMENTROOT="/var/www/html"
 # --------------- INSTALL APACHE MARIA PHP ---------------
-RUN apt-get update -y \
+RUN apt-get update ${APT_FLAGS} \
     && apt-get install ${APT_FLAGS} \
+            curl \
             apache2 \
-            mariadb-server \
-            php-mysql \
             php \
-            phpmyadmin \
+            php-common \
+            php-mysql \
+            psmisc \
+            subversion \
     && rm -f ${DOCUMENTROOT}/index.html \
-    && apt-get autoclean -y
+    && apt-get autoclean ${APT_FLAGS}
+# apt-get install -yq curl apache2 php php-common php-mysql psmisc subversion
 
 RUN sed -i 's#PATH=".*"#PATH="/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games:/sbin:/usr/sbin:/usr/local/sbin"#g' /etc/profile
-RUN sed -i "s/^bind-address.*/bind-address=0.0.0.0/g" "/etc/mysql/mariadb.conf.d/50-server.cnf"
-
-RUN wget -N "https://github.com/OpenGamePanel/Easy-Installers/raw/master/Linux/Debian-Ubuntu/ogp-panel-latest.deb" -O "/tmp/ogp-panel-latest.deb" \
-    && dpkg -i "/tmp/ogp-panel-latest.deb" \
-    && rm -f "/tmp/ogp-panel-latest.deb"
+WORKDIR /root
+RUN curl -o /tmp/ogp-panel-latest.deb -L https://github.com/OpenGamePanel/Easy-Installers/raw/master/Linux/Debian-Ubuntu/ogp-panel-latest.deb
+RUN ls -la /tmp/ogp-panel-latest.deb
+RUN dpkg --install /tmp/ogp-panel-latest.deb
+RUN rm -f /tmp/ogp-panel-latest.deb
 
 # COPY db/articles.sql /
 # COPY app ${DOCUMENTROOT}
@@ -50,4 +53,4 @@ WORKDIR  ${DOCUMENTROOT}
 # DÉMARRAGE DES SERVICES LORS DE L'EXÉCUTION DE L'IMAGE
 
 # ENTRYPOINT service mariadb start && mariadb < /articles.sql && apache2ctl -D FOREGROUND
-ENTRYPOINT service mariadb start && service apache2 start
+ENTRYPOINT service apache2 start
