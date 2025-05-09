@@ -1,0 +1,53 @@
+FROM debian:11.11
+# MÉTADONNÉES DE L'IMAGE
+LABEL org.opencontainers.image.source="https://github.com/mpatron/kdownload"
+LABEL org.opencontainers.image.path="images/ogp-panel/Containerfile"
+LABEL org.opencontainers.image.title="ogp-panel"
+LABEL org.opencontainers.image.description="A Debian:11.11 based image for ogp-panel"
+LABEL org.opencontainers.image.version="1.0.0"
+LABEL org.opencontainers.image.url="https://opengamepanel.org/install_guide/panel.html"
+LABEL org.opencontainers.image.vendor="DiacreOrg"
+LABEL org.opencontainers.image.created="2023-10-01T00:00:00Z"
+LABEL org.opencontainers.image.revision="1.0.0"
+LABEL org.opencontainers.image.authors="Mickael Patron"
+LABEL org.opencontainers.image.licenses="MIT"
+LABEL org.opencontainers.image.documentation="https://github.com/DiacreOrg/infrastructure/README.md"
+
+# RUN apt update
+# RUN apt -yqq install apache2 curl subversion php7.4 php7.4-gd php7.4-zip libapache2-mod-php7.4 php7.4-curl php7.4-mysql php7.4-xmlrpc php-pear mariadb-server php7.4-mbstring git php-bcmath
+# RUN sed -i "s/^bind-address.*/bind-address=0.0.0.0/g" "/etc/mysql/mariadb.conf.d/50-server.cnf"
+# RUN mysql_secure_installation
+# CMD ["/bin/bash", "/usr/bin/sleep", "24h"]
+
+# VARIABLES TEMPORAIRES
+ARG APT_FLAGS="-q -y"
+ARG DOCUMENTROOT="/var/www/html"
+# --------------- INSTALL APACHE MARIA PHP ---------------
+RUN apt-get update -y \
+    && apt-get install ${APT_FLAGS} \
+            apache2 \
+            mariadb-server \
+            php-mysql \
+            php \
+            phpmyadmin \
+    && rm -f ${DOCUMENTROOT}/index.html \
+    && apt-get autoclean -y
+
+RUN sed -i 's#PATH=".*"#PATH="/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games:/sbin:/usr/sbin:/usr/local/sbin"#g' /etc/profile
+RUN sed -i "s/^bind-address.*/bind-address=0.0.0.0/g" "/etc/mysql/mariadb.conf.d/50-server.cnf"
+
+RUN wget -N "https://github.com/OpenGamePanel/Easy-Installers/raw/master/Linux/Debian-Ubuntu/ogp-panel-latest.deb" -O "/tmp/ogp-panel-latest.deb" \
+    && dpkg -i "/tmp/ogp-panel-latest.deb" \
+    && rm -f "/tmp/ogp-panel-latest.deb"
+
+# COPY db/articles.sql /
+# COPY app ${DOCUMENTROOT}
+
+# OUVERTURE DU PORT HTTP
+EXPOSE 80
+# RÉPERTOIRE DE TRAVAIL
+WORKDIR  ${DOCUMENTROOT}
+# DÉMARRAGE DES SERVICES LORS DE L'EXÉCUTION DE L'IMAGE
+
+# ENTRYPOINT service mariadb start && mariadb < /articles.sql && apache2ctl -D FOREGROUND
+ENTRYPOINT service mariadb start && service apache2 start
