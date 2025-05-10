@@ -18,7 +18,7 @@ all: $(BUILDSTAMPS)
 	$(docker_build)
 
 clean:
-	docker image rm -f $(IMAGES)
+	@podman image rm -f diacreorg/$(IMAGES)
 	rm -f $(BUILDSTAMPS)
 
 # Turn `a/.podman-build-flag` back into `a`
