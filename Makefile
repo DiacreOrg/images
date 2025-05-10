@@ -21,6 +21,14 @@ clean:
 	@podman image rm -f diacreorg/$(IMAGES)
 	rm -f $(BUILDSTAMPS)
 
+release:
+	$(docker_release)
+
+install:
+	@echo Todo: install
+#	@podman run -d --name ogp-panel diacreorg/ogp-panel:${VERSION}-$(DOCKER_TAG)
+#	@podman run -d --name ogp-agent diacreorg/ogp-agent:${VERSION}-$(DOCKER_TAG)
+
 # Turn `a/.podman-build-flag` back into `a`
 define from_buildstamp
 $(@:%/$(BUILDSTAMP_FILE)=%)
@@ -34,6 +42,14 @@ define docker_build
 @echo "Building $(from_buildstamp) image with version: ${VERSION}-$(DOCKER_TAG)"
 @podman build -t diacreorg/$(from_buildstamp):${VERSION}-$(DOCKER_TAG) $(from_buildstamp)
 @podman tag diacreorg/$(from_buildstamp):${VERSION}-$(DOCKER_TAG) diacreorg/$(from_buildstamp):latest
-
 touch $@
+endef
+
+define docker_release
+@echo Todo....
+@echo "Releasing $(from_buildstamp) image with version: ${VERSION}"
+@podman build -t diacreorg/$(from_buildstamp):${VERSION} $(from_buildstamp)
+@podman tag diacreorg/$(from_buildstamp):${VERSION} diacreorg/$(from_buildstamp):latest
+@podman push diacreorg/$(from_buildstamp):${VERSION}
+@podman push diacreorg/$(from_buildstamp):latest
 endef
