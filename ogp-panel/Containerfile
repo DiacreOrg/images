@@ -37,6 +37,7 @@ RUN apt-get update ${APT_FLAGS} \
     && apt-get autoclean ${APT_FLAGS} \
     && rm -rf /var/lib/apt
 
+    
 RUN git clone https://github.com/OpenGamePanel/OGP-Website.git . \
     && chown -R www-data:www-data .
 

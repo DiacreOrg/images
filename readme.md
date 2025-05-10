@@ -21,6 +21,7 @@ podman run --detach --replace --name adminer \
     --env ADMINER_DEFAULT_SERVER=mariadb \
     docker.io/library/adminer:5.2.1
 
+
 # Contenu de la base de donnée
 ls -la $(podman volume inspect database | jq '.[].Mountpoint' | tr -d '"')
 echo $(podman volume inspect database | jq '.[].Mountpoint' | tr -d '"')
