@@ -47,6 +47,8 @@ RUN a2enmod rewrite
 
 # CONFIGURATION DU SITE PHP
 ADD config.inc.php /app/includes/
+RUN chown -R www-data:www-data /app/includes/config.inc.php
+RUN chmod 765 /app/includes/config.inc.php
 RUN docker-php-ext-install \
     bcmath \
     mysqli \

@@ -51,7 +51,6 @@ podman run --detach --replace --name adminer \
     docker.io/library/adminer:5.2.1
 podman run --detach --replace --name ogp-panel \
     --pod=${PODNAME} \
-    --volume ogpdir:/var/lib/mysql:Z \
     --secret scmariadbrootpassword,type=env,target=MARIADB_ROOT_PASSWORD \
     --secret scmariadbuser,type=env,target=MARIADB_USER \
     --secret scmariadbpassword,type=env,target=MARIADB_PASSWORD \
@@ -61,6 +60,19 @@ podman run --detach --replace --name ogp-panel \
     --secret scogpsqlpassword,type=env,target=OGP_SQL_PASSWORD \
     --secret scogpsqldatabase,type=env,target=OGP_SQL_DATABASE \
     diacreorg/ogp-panel:latest
+
+podman run --detach --replace --name ogp-agent \
+    --pod=${PODNAME} \
+    --volume ogpdir:/home/ogp_agent/OGP_User_Files:Z \
+    --secret scmariadbrootpassword,type=env,target=MARIADB_ROOT_PASSWORD \
+    --secret scmariadbuser,type=env,target=MARIADB_USER \
+    --secret scmariadbpassword,type=env,target=MARIADB_PASSWORD \
+    --secret scmariadbdatabase,type=env,target=MARIADB_DATABASE \
+    --secret scogpsqlhost,type=env,target=OGP_SQL_HOST \
+    --secret scogpsqluser,type=env,target=OGP_SQL_USER \
+    --secret scogpsqlpassword,type=env,target=OGP_SQL_PASSWORD \
+    --secret scogpsqldatabase,type=env,target=OGP_SQL_DATABASE \
+    diacreorg/ogp-agent:latest
 
 podman exec --name ogp-panel --pod=${PODNAME} diacreorg/ogp-panel:latest cat /root/ogp_user_password
 podman exec ogp-panel env
