@@ -1,7 +1,6 @@
 # OGP-Panel
 
 Todo
-[https://opengamepanel.org/install_guide/panel.html](https://opengamepanel.org/install_guide/panel.html)
 
 ~~~bash
 podman build --log-level=debug -t ogp-panel:latest .
