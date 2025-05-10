@@ -1,0 +1,73 @@
+# Description: Containerfile for ogp-panel
+
+# Like php-7.x, derive from debian:11
+FROM debian:11
+
+# Image metadata as described above
+LABEL org.opencontainers.image.authors="Mickael Patron"
+LABEL org.opencontainers.image.source="https://github.com/DiacreOrg/images"
+LABEL org.opencontainers.image.path="ogp-panel/Containerfile"
+LABEL org.opencontainers.image.title="ogp-panel"
+LABEL org.opencontainers.image.description="A php based image for ogp-panel"
+LABEL org.opencontainers.image.version="1.0.0"
+LABEL org.opencontainers.image.url="https://opengamepanel.org/install_guide/panel.html"
+LABEL org.opencontainers.image.vendor="DiacreOrg"
+LABEL org.opencontainers.image.created="2025-05-08T00:00:00Z"
+LABEL org.opencontainers.image.revision="1.0.0"
+LABEL org.opencontainers.image.licenses="MIT"
+LABEL org.opencontainers.image.documentation="https://github.com/DiacreOrg/images/readme.md"
+
+# VARIABLES TEMPORAIRES
+ARG APT_FLAGS="--quiet --assume-yes --no-install-recommends"
+ARG DOCUMENT_ROOT="/var/www/html"
+ARG DEBIAN_FRONTEND="noninteractive"
+ARG DEBIAN_PRIORITY="critical"
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN apt update ${APT_FLAGS} \
+    && apt install ${APT_FLAGS} \
+         locales \
+         libxml-parser-perl \
+         libpath-class-perl \
+         perl-modules \
+         screen \
+         rsync \
+         sudo \
+         e2fsprogs \
+         unzip \
+         subversion \
+         pure-ftpd \
+         libarchive-zip-perl \
+         libc6 \
+         libgcc1 \
+         git \
+         curl \
+         libc6-i386 \
+         lib32gcc-s1 \
+         libhttp-daemon-perl \
+         wget \
+         procps \
+         systemd-container \
+         libarchive-extract-perl \
+         libstdc++6 \
+         lib32stdc++6 \
+         libmariadb-dev \
+         mariadb-client \
+         lib32z1
+
+# CONFIGURATION D'OPENGAMEPANEL
+RUN wget -N "https://github.com/OpenGamePanel/Easy-Installers/raw/master/Linux/Debian-Ubuntu/ogp-agent-latest.deb" -O "ogp-agent-latest.deb"
+RUN dpkg -i "ogp-agent-latest.deb"
+RUN rm -f "ogp-agent-latest.deb"
+
+# Set LOCALE to UTF8
+RUN echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && \
+    locale-gen en_US.UTF-8 && \
+    dpkg-reconfigure locales && \
+    /usr/sbin/update-locale LANG=en_US.UTF-8
+ENV LC_ALL en_US.UTF-8
+
+ADD entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]

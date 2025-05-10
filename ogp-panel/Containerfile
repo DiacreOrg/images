@@ -1,56 +1,62 @@
-FROM debian:11.11
-# MÉTADONNÉES DE L'IMAGE
-LABEL org.opencontainers.image.source="https://github.com/mpatron/kdownload"
-LABEL org.opencontainers.image.path="images/ogp-panel/Containerfile"
+# Description: Containerfile for ogp-panel
+
+# We have to have got php-7.x & apache2 installed (derive from debian:11-slim)
+FROM php:7.4-apache
+
+# Image metadata as described above
+LABEL org.opencontainers.image.authors="Mickael Patron"
+LABEL org.opencontainers.image.source="https://github.com/DiacreOrg/images"
+LABEL org.opencontainers.image.path="ogp-panel/Containerfile"
 LABEL org.opencontainers.image.title="ogp-panel"
-LABEL org.opencontainers.image.description="A Debian:11.11 based image for ogp-panel"
+LABEL org.opencontainers.image.description="A php based image for ogp-panel"
 LABEL org.opencontainers.image.version="1.0.0"
 LABEL org.opencontainers.image.url="https://opengamepanel.org/install_guide/panel.html"
 LABEL org.opencontainers.image.vendor="DiacreOrg"
-LABEL org.opencontainers.image.created="2023-10-01T00:00:00Z"
+LABEL org.opencontainers.image.created="2025-05-08T00:00:00Z"
 LABEL org.opencontainers.image.revision="1.0.0"
-LABEL org.opencontainers.image.authors="Mickael Patron"
 LABEL org.opencontainers.image.licenses="MIT"
-LABEL org.opencontainers.image.documentation="https://github.com/DiacreOrg/infrastructure/README.md"
-
-# RUN apt update
-# RUN apt -yqq install apache2 curl subversion php7.4 php7.4-gd php7.4-zip libapache2-mod-php7.4 php7.4-curl php7.4-mysql php7.4-xmlrpc php-pear mariadb-server php7.4-mbstring git php-bcmath
-# RUN sed -i "s/^bind-address.*/bind-address=0.0.0.0/g" "/etc/mysql/mariadb.conf.d/50-server.cnf"
-# RUN mysql_secure_installation
-# CMD ["/bin/bash", "/usr/bin/sleep", "24h"]
+LABEL org.opencontainers.image.documentation="https://github.com/DiacreOrg/images/readme.md"
 
 # VARIABLES TEMPORAIRES
-ARG APT_FLAGS="-q -y"
-ARG DOCUMENTROOT="/var/www/html"
-# --------------- INSTALL APACHE MARIA PHP ---------------
+ARG APT_FLAGS="--quiet --assume-yes --no-install-recommends"
+ARG DOCUMENT_ROOT="/var/www/html"
+ARG DEBIAN_FRONTEND="noninteractive"
+ARG DEBIAN_PRIORITY="critical"
+
+# RÉPERTOIRE DE TRAVAIL
+WORKDIR /app
+
+# INSTALLATION D'APACHE
+# INSTALLATION DES LIBRAIRIES NÉCESSAIRES
 RUN apt-get update ${APT_FLAGS} \
     && apt-get install ${APT_FLAGS} \
-            curl \
-            apache2 \
-            php \
-            php-common \
-            php-mysql \
-            psmisc \
-            subversion \
-    && rm -f ${DOCUMENTROOT}/index.html \
-    && apt-get autoclean ${APT_FLAGS}
-# apt-get install -yq curl apache2 php php-common php-mysql psmisc subversion
+         git \
+         libxml2-dev \
+         zlib1g-dev \
+         libzip-dev \
+    && apt-get autoclean ${APT_FLAGS} \
+    && rm -rf /var/lib/apt
 
-RUN sed -i 's#PATH=".*"#PATH="/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games:/sbin:/usr/sbin:/usr/local/sbin"#g' /etc/profile
-WORKDIR /root
-RUN curl -o /tmp/ogp-panel-latest.deb -L https://github.com/OpenGamePanel/Easy-Installers/raw/master/Linux/Debian-Ubuntu/ogp-panel-latest.deb
-RUN ls -la /tmp/ogp-panel-latest.deb
-RUN dpkg --install /tmp/ogp-panel-latest.deb
-RUN rm -f /tmp/ogp-panel-latest.deb
+RUN git clone https://github.com/OpenGamePanel/OGP-Website.git . \
+    && chown -R www-data:www-data .
 
-# COPY db/articles.sql /
-# COPY app ${DOCUMENTROOT}
+# CONFIGURATION DU SERVEUR APACHE
+ADD vhost.conf /etc/apache2/sites-available/000-default.conf
+RUN a2enmod rewrite
+
+# CONFIGURATION DU SITE PHP
+ADD config.inc.php /app/includes/
+RUN docker-php-ext-install \
+    bcmath \
+    mysqli \
+    xmlrpc \
+    zip
 
 # OUVERTURE DU PORT HTTP
-EXPOSE 80
-# RÉPERTOIRE DE TRAVAIL
-WORKDIR  ${DOCUMENTROOT}
-# DÉMARRAGE DES SERVICES LORS DE L'EXÉCUTION DE L'IMAGE
+# Déjà fait dans l'image de base
+# EXPOSE 80
 
-# ENTRYPOINT service mariadb start && mariadb < /articles.sql && apache2ctl -D FOREGROUND
-ENTRYPOINT service apache2 start
+# DÉMARRAGE DES SERVICES LORS DE L'EXÉCUTION DE L'IMAGE
+# Déjà fait dans l'image de base
+# ENTRYPOINT apache2ctl -D FOREGROUND
+# ENTRYPOINT service apache2 start
