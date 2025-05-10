@@ -44,6 +44,7 @@ podman generate kube ${MARIADB_PODNAME}
 podman pod stop --ignore ${MARIADB_PODNAME}
 podman pod rm --ignore --force ${MARIADB_PODNAME}
 podman volume rm database
+podman system prune --all --force
 ~~~
 
 Pour tester
