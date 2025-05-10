@@ -1,39 +1,24 @@
 VERSION := $(shell git describe --tags --abbrev=0)
 DOCKER_TAG := $(shell date +%Y%m%d)
 
-# For consistency, the src dirs are named like the images they produce
-IMAGES = ogp-panel ogp-agent
+.PHONY: ogp-panel ogp-agent
+.DEFAULT_GOAL := all
+all: ogp-panel ogp-agent
 
-# Keep "stamps" around, recording that images were built. 
-# You could keep them in e.g. a `.docker-buildstamps/*` dir, 
-# but this example uses `*/.podman-build-flag`.
-BUILDSTAMP_FILE = .podman-build-flag
-BUILDSTAMPS = $(addsuffix /$(BUILDSTAMP_FILE),$(IMAGES))
+ogp-panel: Makefile ogp-panel/Containerfile ogp-panel/config.inc.php ogp-panel/vhost.conf
+	@echo "Building ogp-panel image with version: ${VERSION}-$(DOCKER_TAG)"
+	@echo "Using Docker tag: $(DOCKER_TAG)"
+	@echo "Building ogp-panel image..."
+	@echo "Building ogp-panel image with version: ${VERSION}-$(DOCKER_TAG)"
+	@podman build -t diacreorg/ogp-panel:${VERSION}-$(DOCKER_TAG) ogp-panel
+	@podman tag diacreorg/ogp-panel:${VERSION}-$(DOCKER_TAG) diacreorg/ogp-panel:latest
 
-.PHONY: all
-all: $(BUILDSTAMPS)
+ogp-agent: Makefile ogp-agent/Containerfile ogp-agent/entrypoint.sh
+	@podman build -t diacreorg/ogp-agent:${VERSION}-$(DOCKER_TAG) ogp-agent
+	@podman tag diacreorg/ogp-agent:${VERSION}-$(DOCKER_TAG) diacreorg/ogp-agent:latest
 
-# Pattern rule: let e.g. `a/.podman-build-flag` depend on changes to `a/*` (-but avoid circular dep)
-%/$(BUILDSTAMP_FILE): % %/[!$(BUILDSTAMP_FILE)]*
-	$(docker_build)
-
-clean:
-	docker image rm -f $(IMAGES)
-	rm -f $(BUILDSTAMPS)
-
-# Turn `a/.podman-build-flag` back into `a`
-define from_buildstamp
-$(@:%/$(BUILDSTAMP_FILE)=%)
-endef
-
-# Self-explanatory
-define docker_build
-@echo "Building $(from_buildstamp) image with version: ${VERSION}-$(DOCKER_TAG)"
-@echo "Using Docker tag: $(DOCKER_TAG)"
-@echo "Building $(from_buildstamp) image..."
-@echo "Building $(from_buildstamp) image with version: ${VERSION}-$(DOCKER_TAG)"
-@podman build -t diacreorg/$(from_buildstamp):${VERSION}-$(DOCKER_TAG) $(from_buildstamp)
-@podman tag diacreorg/$(from_buildstamp):${VERSION}-$(DOCKER_TAG) diacreorg/$(from_buildstamp):latest
-
-touch $@
-endef
+release:
+	podman build -t diacreorg/ogp-panel:${VERSION} ogp-panel
+	podman tag diacreorg/ogp-panel:${VERSION} diacreorg/ogp-panel:latest
+	podman push diacreorg/ogp-panel:${VERSION}
+	podman push diacreorg/ogp-panel:latest
