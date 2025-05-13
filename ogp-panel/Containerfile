@@ -34,6 +34,7 @@ RUN apt-get update ${APT_FLAGS} \
          libxml2-dev \
          zlib1g-dev \
          libzip-dev \
+         inetutils-ping \
     && apt-get autoclean ${APT_FLAGS} \
     && rm -rf /var/lib/apt
 

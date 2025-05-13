@@ -18,8 +18,7 @@ all: $(BUILDSTAMPS)
 	$(docker_build)
 
 clean:
-	@podman image rm -f diacreorg/$(IMAGES)
-	rm -f $(BUILDSTAMPS)
+	$(docker_clean)
 
 release:
 	$(docker_release)
@@ -52,4 +51,12 @@ define docker_release
 @podman tag diacreorg/$(from_buildstamp):${VERSION} diacreorg/$(from_buildstamp):latest
 @podman push diacreorg/$(from_buildstamp):${VERSION}
 @podman push diacreorg/$(from_buildstamp):latest
+endef
+
+define docker_clean
+@echo "Cleaning $(from_buildstamp) image with version: ${VERSION}-$(DOCKER_TAG)"
+@podman rmi --force --ignore diacreorg/$(from_buildstamp):${VERSION}-$(DOCKER_TAG)
+@podman rmi --force --ignore diacreorg/$(from_buildstamp):latest
+@podman rmi --force --ignore diacreorg/$(from_buildstamp):${VERSION}
+rm -f $(BUILDSTAMPS)
 endef
