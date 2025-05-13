@@ -1,6 +1,15 @@
 # OGP MariaDB Adminer
 
 ~~~bash
+# Start podman
+systemctl --user start podman.socket
+systemctl --user enable podman.socket
+loginctl enable-linger ${USER}
+# Verifier qu'il est là
+ls -la $XDG_RUNTIME_DIR/podman/podman.sock
+# Cf. https://docs.podman.io/en/latest/markdown/podman-system-service.1.html
+
+
 # Envirronnement
 export GREEN='\033[0;32m'
 export NOCOLOR='\033[0m'
@@ -26,11 +35,12 @@ printf ${OGP_SQL_DATABASE} | podman secret create --replace scogpsqldatabase -
 podman secret inspect scmariadbrootpassword --showsecret | jq '.[].SecretData'
 
 # Creation des volumes
-podman volume create database
-podman volume create ogpdir
+podman volume create --ignore database
+podman volume create --ignore ogpdir
+podman volume create --ignore backup
 
 # Creation du POD
-podman pod create --name ${PODNAME} --publish 3306:3306 --publish 8080:8080 --publish 8081:80
+podman pod create --replace --name ${PODNAME} --publish 3306:3306 --publish 8080:8080 --publish 8081:80
 
 # Creation des instances
 podman run --detach --replace --name mariadb \
@@ -74,8 +84,10 @@ podman run --detach --replace --name ogp-agent \
     --secret scogpsqldatabase,type=env,target=OGP_SQL_DATABASE \
     diacreorg/ogp-agent:latest
 
-podman exec --name ogp-panel --pod=${PODNAME} diacreorg/ogp-panel:latest cat /root/ogp_user_password
+podman exec ogp-panel cat /root/ogp_user_password
 podman exec ogp-panel env
+podman exec ogp-agent ls -la /home/ogp_agent/OGP_User_Files
+podman exec -it ogp-agent bash
 
 # Contenu de la base de donnée
 ls -la $(podman volume inspect database | jq '.[].Mountpoint' | tr -d '"')
@@ -89,7 +101,6 @@ echo -e "${GREEN}"'  - login    :' "root""${NOCOLOR}"
 echo -e "${GREEN}"'  - password :' "$(podman secret inspect scmariadbrootpassword --showsecret | jq '.[].SecretData')""${NOCOLOR}"
 
 # Backup
-podman volume create backup
 podman run --pod=${PODNAME} --volume backup:/backup --rm mariadb:11.7.2 mariadb-backup --help
 
 # Pour migrer vers kubernetes

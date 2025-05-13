@@ -60,6 +60,10 @@ RUN wget -N "https://github.com/OpenGamePanel/Easy-Installers/raw/master/Linux/D
 RUN dpkg -i "ogp-agent-latest.deb"
 RUN rm -f "ogp-agent-latest.deb"
 
+RUN mkdir -p /home/ogp_agent/OGP_User_Files
+RUN chown ogp_agent:ogp_agent /home/ogp_agent/OGP_User_Files
+RUN chmod 755 /home/ogp_agent/OGP_User_Files
+
 # Set LOCALE to UTF8
 RUN echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && \
     locale-gen en_US.UTF-8 && \
