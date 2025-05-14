@@ -1,0 +1,32 @@
+REGISTRY?=diacreorg
+CONTAINERFILES=$(shell find * -type f -name Containerfile)
+IMAGES=$(subst /,\:,$(subst /Containerfile,,$(CONTAINERFILES)))
+DEPENDS=.depends.mk
+VERSION := $(shell git describe --tags --abbrev=0)
+DATE_TAG := $(shell date +%Y%m%d)
+# Source : https://philpep.org/blog/a-makefile-for-your-dockerfiles/
+
+.PHONY: all
+.PRECIOUS: $(DEPENDS)
+all: $(IMAGES)
+
+clean:
+	@echo "Cleaning up images..."
+	rm -f $(DEPENDS)
+
+$(DEPENDS): $(CONTAINERFILES) Makefile
+	@echo "Generating dependencies for images..."
+	grep '^FROM $(REGISTRY)/' $(CONTAINERFILES) | \
+		awk -F '/Containerfile:FROM $(REGISTRY)/' '{ print $$1 " " $$2 }' | \
+		sed 's@[:/]@\\:@g' | awk '{ print $$1 ": " $$2 }' > $@
+	sinclude $(DEPENDS)
+	touch $@/$(DEPENDS)
+
+
+$(IMAGES): %: %/Containerfile %/$(DEPENDS)
+	@echo "Building image: $@"
+#	@podman build -t $(REGISTRY)/$@ $(subst :,/,$@)
+#	@podman tag $(REGISTRY)/$@ $(REGISTRY)/$@:latest
+	@podman build -t $(REGISTRY)/$@:${VERSION}-$(DATE_TAG) $(subst :,/,$@)
+	@podman tag $(REGISTRY)/$@:${VERSION}-$(DATE_TAG) $(REGISTRY)/$(subst :,/,$@):latest
+	@echo "Image $@ built successfully."
