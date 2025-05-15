@@ -56,6 +56,11 @@ RUN docker-php-ext-install \
     xmlrpc \
     zip
 
+RUN rm -f /var/log/apache2/error.log && \
+    touch /var/log/apache2/error.log && \
+    chown -R www-data:www-data /var/log/apache2/error.log && \
+    chmod 775 /var/log/apache2/error.log
+
 # OUVERTURE DU PORT HTTP
 # Déjà fait dans l'image de base
 # EXPOSE 80
