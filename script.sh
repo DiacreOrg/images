@@ -49,6 +49,9 @@ printf ${OGP_SQL_HOST} | podman secret create --replace scogpsqlhost -
 printf ${OGP_SQL_USER} | podman secret create --replace scogpsqluser -
 printf ${OGP_SQL_PASSWORD} | podman secret create --replace scogpsqlpassword -
 printf ${OGP_SQL_DATABASE} | podman secret create --replace scogpsqldatabase -
+# Affichage des secrets
+echo -e "${GREEN} scmariadbrootpassword :$(podman secret inspect scmariadbrootpassword --showsecret | jq '.[].SecretData') ${NOCOLOR}"
+echo -e "${GREEN}"   'podman exec -it mariadb mariadb --user=root --password="$(podman secret inspect scmariadbrootpassword --showsecret | jq -r '.[].SecretData')"'"${NOCOLOR}"
 podman secret inspect scmariadbrootpassword --showsecret | jq '.[].SecretData'
 
 # Creation du reseau

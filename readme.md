@@ -30,6 +30,7 @@ podman system prune --all --force
 ~~~bash
 # podman pull debian:11.11
 podman run --rm --replace --interactive --tty --cap-add=NET_RAW --name debian docker.io/library/debian:11.11 /bin/bash
+podman exec -it ogp-panel /bin/bash
 ~~~
 
 

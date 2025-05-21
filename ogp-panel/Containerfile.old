@@ -24,7 +24,7 @@ ARG DEBIAN_FRONTEND="noninteractive"
 ARG DEBIAN_PRIORITY="critical"
 
 # RÉPERTOIRE DE TRAVAIL
-WORKDIR /var/www/html
+WORKDIR /app
 
 # INSTALLATION D'APACHE
 # INSTALLATION DES LIBRAIRIES NÉCESSAIRES
@@ -38,40 +38,24 @@ RUN apt-get update ${APT_FLAGS} \
     && apt-get autoclean ${APT_FLAGS} \
     && rm -rf /var/lib/apt
 
-RUN apt update && apt install ${APT_FLAGS} wget vim && \
-    wget -N "https://github.com/OpenGamePanel/Easy-Installers/raw/master/Linux/Debian-Ubuntu/ogp-panel-latest.deb" -O "/root/ogp-panel-latest.deb" && \
-    printf 'HelloWorld!' | apt install ${APT_FLAGS} /root/ogp-panel-latest.deb
-RUN cp /usr/local/etc/php/php.ini-development /usr/local/etc/php/php.ini
-RUN sed -i 's/;error_log = php_errors.log/error_log = php_errors.log/' /usr/local/etc/php/php.ini
-RUN sed -i 's/;date.timezone =/date.timezone = Europe\/Paris/' /usr/local/etc/php/php.ini
-RUN sed -i 's/;extension=xmlrpc.so/extension=xmlrpc.so/' /usr/local/etc/php/php.ini
-RUN sed -i 's/;extension=zip.so/extension=zip.so/' /usr/local/etc/php/php.ini
-RUN sed -i 's/;extension=bcmath.so/extension=bcmath.so/' /usr/local/etc/php/php.ini
-RUN sed -i 's/;extension=mysqli.so/extension=mysqli.so/' /usr/local/etc/php/php.ini
-RUN sed -i 's/;extension=xml.so/extension=xml.so/' /usr/local/etc/php/php.ini
-
     
-# RUN git clone https://github.com/OpenGamePanel/OGP-Website.git . \
-#    && chown -R www-data:www-data .
+RUN git clone https://github.com/OpenGamePanel/OGP-Website.git . \
+    && chown -R www-data:www-data .
 
 # CONFIGURATION DU SERVEUR APACHE
-# ADD vhost.conf /etc/apache2/sites-available/000-default.conf
-# RUN a2enmod rewrite
+ADD vhost.conf /etc/apache2/sites-available/000-default.conf
+RUN a2enmod rewrite
 
 # CONFIGURATION DU SITE PHP
-ADD config.inc.php /var/www/html/includes/
-RUN chown -R www-data:www-data /var/www/html/includes/config.inc.php
-RUN chmod 765 /var/www/html/includes/config.inc.php
+ADD config.inc.php /app/includes/
+RUN chown -R www-data:www-data /app/includes/config.inc.php
+RUN chmod 765 /app/includes/config.inc.php
 RUN docker-php-ext-install \
     bcmath \
     mysqli \
     xmlrpc \
     zip
 
-RUN rm -f /var/log/apache2/access.log && \
-    touch /var/log/apache2/access.log && \
-    chown -R www-data:www-data /var/log/apache2/access.log && \
-    chmod 775 /var/log/apache2/access.log
 RUN rm -f /var/log/apache2/error.log && \
     touch /var/log/apache2/error.log && \
     chown -R www-data:www-data /var/log/apache2/error.log && \
